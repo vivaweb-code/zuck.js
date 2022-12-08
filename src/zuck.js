@@ -1015,12 +1015,12 @@ module.exports = (window => {
       const items = [];
 
       if (!option('reactive') || forceUpdate) {
-        each(storyItems, (i, { firstElementChild }) => {
-          const a = firstElementChild;
+        each(storyItems, (i, li) => {
+          const a = li.firstElementChild;
           const img = a.firstElementChild;
 
           const item = {
-            id: a.getAttribute('data-id'),
+            id: li.getAttribute('data-id'),
             src: a.getAttribute('href'),
             length: a.getAttribute('data-length'),
             type: a.getAttribute('data-type'),
