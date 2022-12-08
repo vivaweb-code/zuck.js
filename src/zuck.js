@@ -271,6 +271,7 @@ module.exports = (window => {
           callback();
         },
         onView: function (storyId) {},
+        onItemView: function (itemId) {},
         onEnd: function (storyId, callback) {
           callback();
         },
@@ -569,7 +570,10 @@ module.exports = (window => {
               playVideoItem(storyViewer, [items[0], items[1]], true);
             }
 
+            currentStoryData = zuck.data[zuck.internalData.currentStory];
+
             option('callbacks', 'onView')(zuck.internalData.currentStory);
+            option('callbacks', 'onItemView')(currentStoryData.items[currentStoryData.currentItem].id);
           }
         }, transitionTime + 50);
       };
@@ -943,8 +947,10 @@ module.exports = (window => {
 
               tryFullScreen();
             }
+            currentStoryData = zuck.data[zuck.internalData.currentStory];
 
             option('callbacks', 'onView')(storyId);
+            option('callbacks', 'onItemView')(currentStoryData.items[currentStoryData.currentItem].id);
           };
 
           option('callbacks', 'onOpen')(storyId, callback);
@@ -1377,6 +1383,7 @@ module.exports = (window => {
           });
 
           zuck.data[currentStory].currentItem = zuck.data[currentStory].currentItem + directionNumber;
+          option('callbacks', 'onItemView')(zuck.data[currentStory].items[zuck.data[currentStory].currentItem].id);
 
           playVideoItem(storyViewer, nextItems, event);
         };
