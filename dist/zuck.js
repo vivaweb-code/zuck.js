@@ -780,8 +780,6 @@ module.exports = function (window) {
               saveLocalData('seenItems', zuck.internalData.seenItems);
               updateStorySeenPosition();
             }
-
-            // option('callbacks', 'onItemView')(zuck.data[zuck.internalData.currentStory].items[zuck.data[zuck.internalData.currentStory].currentItem].id);
             var stories = query('#zuck-modal .story-viewer.next');
             if (!stories) {
               modal.close();
