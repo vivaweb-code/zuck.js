@@ -308,7 +308,7 @@ module.exports = (window => {
         },
 
         timelineStoryItem (itemData) {
-          const reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview'];
+          const reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview', 'storyId'];
           let attributes = `
             href="${get(itemData, 'src')}"
             data-link="${get(itemData, 'link')}"
@@ -316,6 +316,7 @@ module.exports = (window => {
             data-time="${get(itemData, 'time')}"
             data-type="${get(itemData, 'type')}"
             data-length="${get(itemData, 'length')}"
+            data-parent-id="${get(itemData, 'storyId')}"
           `;
 
           for (const dataKey in itemData) {
@@ -1033,6 +1034,7 @@ module.exports = (window => {
             time: a.getAttribute('data-time'),
             link: a.getAttribute('data-link'),
             linkText: a.getAttribute('data-linkText'),
+            storyId: a.getAttribute('data-parent-id'),
             preview: img.getAttribute('src')
           };
 
@@ -1311,6 +1313,7 @@ module.exports = (window => {
 
     zuck.addItem = (storyId, data, append) => {
       const story = query(`#${id} > [data-id="${storyId}"]`);
+      data['storyId'] = storyId;
 
       if (!option('reactive')) {
         const li = document.createElement('li');

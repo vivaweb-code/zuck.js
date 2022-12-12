@@ -322,8 +322,8 @@ module.exports = function (window) {
           return "\n            <div class=\"story ".concat(get(itemData, 'seen') === true ? 'seen' : '', "\">\n              <a class=\"item-link\" href=\"").concat(get(itemData, 'link'), "\">\n                <span class=\"item-preview\">\n                  <img lazy=\"eager\" src=\"").concat(option('avatars') || !get(itemData, 'currentPreview') ? get(itemData, 'photo') : get(itemData, 'currentPreview'), "\" />\n                </span>\n                <span class=\"info\" itemProp=\"author\" itemScope itemType=\"http://schema.org/Person\">\n                  <strong class=\"name\" itemProp=\"name\">").concat(get(itemData, 'name'), "</strong>\n                  <span class=\"time\">").concat(get(itemData, 'lastUpdatedAgo'), "</span>\n                </span>\n              </a>\n              \n              <ul class=\"items\"></ul>\n            </div>");
         },
         timelineStoryItem: function timelineStoryItem(itemData) {
-          var reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview'];
-          var attributes = "\n            href=\"".concat(get(itemData, 'src'), "\"\n            data-link=\"").concat(get(itemData, 'link'), "\"\n            data-linkText=\"").concat(get(itemData, 'linkText'), "\"\n            data-time=\"").concat(get(itemData, 'time'), "\"\n            data-type=\"").concat(get(itemData, 'type'), "\"\n            data-length=\"").concat(get(itemData, 'length'), "\"\n          ");
+          var reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview', 'storyId'];
+          var attributes = "\n            href=\"".concat(get(itemData, 'src'), "\"\n            data-link=\"").concat(get(itemData, 'link'), "\"\n            data-linkText=\"").concat(get(itemData, 'linkText'), "\"\n            data-time=\"").concat(get(itemData, 'time'), "\"\n            data-type=\"").concat(get(itemData, 'type'), "\"\n            data-length=\"").concat(get(itemData, 'length'), "\"\n            data-parent-id=\"").concat(get(itemData, 'storyId'), "\"\n          ");
           for (var dataKey in itemData) {
             if (reserved.indexOf(dataKey) === -1) {
               attributes += " data-".concat(dataKey, "=\"").concat(itemData[dataKey], "\"");
@@ -830,6 +830,7 @@ module.exports = function (window) {
             time: a.getAttribute('data-time'),
             link: a.getAttribute('data-link'),
             linkText: a.getAttribute('data-linkText'),
+            storyId: a.getAttribute('data-parent-id'),
             preview: img.getAttribute('src')
           };
 
@@ -1051,6 +1052,7 @@ module.exports = function (window) {
     };
     zuck.addItem = function (storyId, data, append) {
       var story = query("#".concat(id, " > [data-id=\"").concat(storyId, "\"]"));
+      data['storyId'] = storyId;
       if (!option('reactive')) {
         var li = document.createElement('li');
         var el = story.querySelectorAll('.items')[0];
