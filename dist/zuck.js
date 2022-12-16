@@ -856,10 +856,6 @@ module.exports = function (window) {
     };
     var parseStory = function parseStory(story, returnCallback) {
       var storyId = story.getAttribute('data-id');
-      var seen = false;
-      if (zuck.internalData.seenItems[storyId]) {
-        seen = true;
-      }
 
       /*
       REACT
@@ -879,7 +875,7 @@ module.exports = function (window) {
         zuck.data[storyId].name = story.querySelector('.name').innerText;
         zuck.data[storyId].link = story.querySelector('.item-link').getAttribute('href');
         zuck.data[storyId].lastUpdated = story.getAttribute('data-last-updated');
-        zuck.data[storyId].seen = seen;
+        zuck.data[storyId].seen = story.getAttribute('data-seen') === "true";
         if (!zuck.data[storyId].items) {
           zuck.data[storyId].items = [];
           zuck.data[storyId].noItems = true;
@@ -1010,9 +1006,11 @@ module.exports = function (window) {
       if (items[0]) {
         preview = items[0].preview || '';
       }
-      if (zuck.internalData.seenItems[storyId] === true) {
+      console.log(data);
+      if (option('localStorage') && zuck.internalData.seenItems[storyId] === true) {
         data.seen = true;
       }
+      console.log(data);
       data.currentPreview = preview;
       if (!storyEl) {
         var storyItem = document.createElement('div');
@@ -1027,6 +1025,7 @@ module.exports = function (window) {
       }
       story.setAttribute('data-id', storyId);
       story.setAttribute('data-photo', get(data, 'photo'));
+      story.setAttribute('data-seen', get(data, 'seen'));
       story.setAttribute('data-last-updated', get(data, 'lastUpdated'));
       parseStory(story);
       if (!storyEl && !option('reactive')) {
@@ -1137,7 +1136,7 @@ module.exports = function (window) {
           }
         }, false);
       }
-      if (!option('reactive')) {
+      if (!option('reactive') && option('localStorage')) {
         var seenItems = getLocalData('seenItems');
         each(Object.keys(seenItems), function (keyIndex, key) {
           if (zuck.data[key]) {
@@ -1159,14 +1158,15 @@ module.exports = function (window) {
   };
 
   /* Helpers */
-  ZuckJS.buildTimelineItem = function (id, photo, name, link, lastUpdated, items) {
+  ZuckJS.buildTimelineItem = function (id, photo, name, link, lastUpdated, items, seen) {
     var timelineItem = {
       id: id,
       photo: photo,
       name: name,
       link: link,
       lastUpdated: lastUpdated,
-      items: []
+      items: [],
+      seen: seen != undefined ? seen : false
     };
     each(items, function (itemIndex, itemArgs) {
       timelineItem.items.push(ZuckJS.buildStoryItem.apply(ZuckJS, itemArgs));

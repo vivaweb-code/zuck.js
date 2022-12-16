@@ -1064,12 +1064,6 @@ module.exports = (window => {
     const parseStory = function (story, returnCallback) {
       const storyId = story.getAttribute('data-id');
 
-      let seen = false;
-
-      if (zuck.internalData.seenItems[storyId]) {
-        seen = true;
-      }
-
       /*
       REACT
       if (seen) {
@@ -1089,7 +1083,7 @@ module.exports = (window => {
         zuck.data[storyId].name = story.querySelector('.name').innerText;
         zuck.data[storyId].link = story.querySelector('.item-link').getAttribute('href');
         zuck.data[storyId].lastUpdated = story.getAttribute('data-last-updated');
-        zuck.data[storyId].seen = seen;
+        zuck.data[storyId].seen = story.getAttribute('data-seen') === "true";
 
         if (!zuck.data[storyId].items) {
           zuck.data[storyId].items = [];
@@ -1257,7 +1251,7 @@ module.exports = (window => {
         preview = items[0].preview || '';
       }
 
-      if (zuck.internalData.seenItems[storyId] === true) {
+      if (option('localStorage') && zuck.internalData.seenItems[storyId] === true) {
         data.seen = true;
       }
 
@@ -1280,6 +1274,7 @@ module.exports = (window => {
 
       story.setAttribute('data-id', storyId);
       story.setAttribute('data-photo', get(data, 'photo'));
+      story.setAttribute('data-seen', get(data, 'seen'));
       story.setAttribute('data-last-updated', get(data, 'lastUpdated'));
 
       parseStory(story);
@@ -1425,7 +1420,7 @@ module.exports = (window => {
         );
       }
 
-      if (!option('reactive')) {
+      if (!option('reactive') && option('localStorage')) {
         const seenItems = getLocalData('seenItems');
 
         each(Object.keys(seenItems), (keyIndex, key) => {
@@ -1454,14 +1449,15 @@ module.exports = (window => {
   };
 
   /* Helpers */
-  ZuckJS.buildTimelineItem = (id, photo, name, link, lastUpdated, items) => {
+  ZuckJS.buildTimelineItem = (id, photo, name, link, lastUpdated, items, seen) => {
     const timelineItem = {
       id,
       photo,
       name,
       link,
       lastUpdated,
-      items: []
+      items: [],
+      seen: seen != undefined ? seen : false,
     };
 
     each(items, (itemIndex, itemArgs) => {
