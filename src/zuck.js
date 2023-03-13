@@ -98,6 +98,12 @@ module.exports = (window => {
       }
     };
 
+    const debug = function (text) {
+      if (option('debug')) console.log('[zuckjs] '+text);
+    }
+
+    debug('ZuckJS init started with debug enabled');
+
     const fullScreen = function (elem, cancel) {
       const func = 'RequestFullScreen';
       const elFunc = 'requestFullScreen'; // crappy vendor prefixes.
@@ -266,6 +272,7 @@ module.exports = (window => {
       cubeEffect: false,
       list: false,
       localStorage: true,
+      debug: false,
       callbacks: {
         onOpen: function (storyId, callback) {
           callback();
@@ -467,6 +474,7 @@ module.exports = (window => {
       const modalContent = query('#zuck-modal-content');
 
       const moveStoryItem = function (direction) {
+        debug(`moveStoryItem(${direction})`);
         const modalContainer = query('#zuck-modal');
 
         let target = '';
@@ -957,6 +965,7 @@ module.exports = (window => {
           option('callbacks', 'onOpen')(storyId, callback);
         },
         next (unmute) {
+          debug(`next(${unmute})`);
           const callback = function () {
             const lastStory = zuck.internalData.currentStory;
             const lastStoryTimelineElement = query(
@@ -981,6 +990,41 @@ module.exports = (window => {
                 moveStoryItem(false);
               } else {
                 moveStoryItem(true);
+              }
+            }
+          };
+
+          option('callbacks', 'onEnd')(
+            zuck.internalData.currentStory,
+            callback
+          );
+        },
+        prev (unmute) {
+          debug(`prev(${unmute})`);
+          const callback = function () {
+            // const lastStory = zuck.internalData.currentStory;
+            // const lastStoryTimelineElement = query(
+            //   `#${id} [data-id="${lastStory}"]`
+            // );
+
+            // if (lastStoryTimelineElement) {
+            //   lastStoryTimelineElement.classList.add('seen');
+
+            //   zuck.data[lastStory].seen = true;
+            //   zuck.internalData.seenItems[lastStory] = true;
+
+            //   saveLocalData('seenItems', zuck.internalData.seenItems);
+            //   updateStorySeenPosition();
+            // }
+
+            const stories = query('#zuck-modal .story-viewer.previous');
+            if (!stories) {
+              // modal.close();
+            } else {
+              if (option('rtl')) {
+                moveStoryItem(true);
+              } else {
+                moveStoryItem(false);
               }
             }
           };
@@ -1339,6 +1383,7 @@ module.exports = (window => {
     };
 
     zuck.navigateItem = zuck.nextItem = (direction, event) => {
+      debug(`zuck.nextItem(${direction}, ${event})`);
       const currentStory = zuck.internalData.currentStory;
       const currentItem = zuck.data[currentStory].currentItem;
       const storyViewer = query(`#zuck-modal .story-viewer[data-story-id="${currentStory}"]`);
@@ -1393,6 +1438,8 @@ module.exports = (window => {
       } else if (storyViewer) {
         if (direction !== 'previous') {
           modal.next(event);
+        } else {
+          modal.prev(event);
         }
       }
     };

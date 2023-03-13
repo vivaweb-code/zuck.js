@@ -163,6 +163,10 @@ module.exports = function (window) {
         return type(options[name]) ? options[name] : optionsDefault[name];
       }
     };
+    var debug = function debug(text) {
+      if (option('debug')) console.log('[zuckjs] ' + text);
+    };
+    debug('ZuckJS init started with debug enabled');
     var fullScreen = function fullScreen(elem, cancel) {
       var func = 'RequestFullScreen';
       var elFunc = 'requestFullScreen'; // crappy vendor prefixes.
@@ -298,6 +302,7 @@ module.exports = function (window) {
       cubeEffect: false,
       list: false,
       localStorage: true,
+      debug: false,
       callbacks: {
         onOpen: function onOpen(storyId, callback) {
           callback();
@@ -400,6 +405,7 @@ module.exports = function (window) {
       }
       var modalContent = query('#zuck-modal-content');
       var moveStoryItem = function moveStoryItem(direction) {
+        debug("moveStoryItem(".concat(direction, ")"));
         var modalContainer = query('#zuck-modal');
         var target = '';
         var useless = '';
@@ -770,6 +776,7 @@ module.exports = function (window) {
           option('callbacks', 'onOpen')(storyId, callback);
         },
         next: function next(unmute) {
+          debug("next(".concat(unmute, ")"));
           var callback = function callback() {
             var lastStory = zuck.internalData.currentStory;
             var lastStoryTimelineElement = query("#".concat(id, " [data-id=\"").concat(lastStory, "\"]"));
@@ -788,6 +795,37 @@ module.exports = function (window) {
                 moveStoryItem(false);
               } else {
                 moveStoryItem(true);
+              }
+            }
+          };
+          option('callbacks', 'onEnd')(zuck.internalData.currentStory, callback);
+        },
+        prev: function prev(unmute) {
+          debug("prev(".concat(unmute, ")"));
+          var callback = function callback() {
+            // const lastStory = zuck.internalData.currentStory;
+            // const lastStoryTimelineElement = query(
+            //   `#${id} [data-id="${lastStory}"]`
+            // );
+
+            // if (lastStoryTimelineElement) {
+            //   lastStoryTimelineElement.classList.add('seen');
+
+            //   zuck.data[lastStory].seen = true;
+            //   zuck.internalData.seenItems[lastStory] = true;
+
+            //   saveLocalData('seenItems', zuck.internalData.seenItems);
+            //   updateStorySeenPosition();
+            // }
+
+            var stories = query('#zuck-modal .story-viewer.previous');
+            if (!stories) {
+              // modal.close();
+            } else {
+              if (option('rtl')) {
+                moveStoryItem(true);
+              } else {
+                moveStoryItem(false);
               }
             }
           };
@@ -1006,11 +1044,9 @@ module.exports = function (window) {
       if (items[0]) {
         preview = items[0].preview || '';
       }
-      console.log(data);
       if (option('localStorage') && zuck.internalData.seenItems[storyId] === true) {
         data.seen = true;
       }
-      console.log(data);
       data.currentPreview = preview;
       if (!storyEl) {
         var storyItem = document.createElement('div');
@@ -1075,6 +1111,7 @@ module.exports = function (window) {
       }
     };
     zuck.navigateItem = zuck.nextItem = function (direction, event) {
+      debug("zuck.nextItem(".concat(direction, ", ").concat(event, ")"));
       var currentStory = zuck.internalData.currentStory;
       var currentItem = zuck.data[currentStory].currentItem;
       var storyViewer = query("#zuck-modal .story-viewer[data-story-id=\"".concat(currentStory, "\"]"));
@@ -1117,6 +1154,8 @@ module.exports = function (window) {
       } else if (storyViewer) {
         if (direction !== 'previous') {
           modal.next(event);
+        } else {
+          modal.prev(event);
         }
       }
     };
