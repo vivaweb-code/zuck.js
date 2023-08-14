@@ -98,6 +98,12 @@ module.exports = (window => {
       }
     };
 
+    const debug = function (text) {
+      if (option('debug')) console.log('[zuckjs] '+text);
+    }
+
+    debug('ZuckJS init started with debug enabled');
+
     const fullScreen = function (elem, cancel) {
       const func = 'RequestFullScreen';
       const elFunc = 'requestFullScreen'; // crappy vendor prefixes.
@@ -266,11 +272,13 @@ module.exports = (window => {
       cubeEffect: false,
       list: false,
       localStorage: true,
+      debug: false,
       callbacks: {
         onOpen: function (storyId, callback) {
           callback();
         },
         onView: function (storyId) {},
+        onItemView: function (itemId) {},
         onEnd: function (storyId, callback) {
           callback();
         },
@@ -307,7 +315,7 @@ module.exports = (window => {
         },
 
         timelineStoryItem (itemData) {
-          const reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview'];
+          const reserved = ['id', 'seen', 'src', 'link', 'linkText', 'time', 'type', 'length', 'preview', 'storyId'];
           let attributes = `
             href="${get(itemData, 'src')}"
             data-link="${get(itemData, 'link')}"
@@ -315,6 +323,7 @@ module.exports = (window => {
             data-time="${get(itemData, 'time')}"
             data-type="${get(itemData, 'type')}"
             data-length="${get(itemData, 'length')}"
+            data-parent-id="${get(itemData, 'storyId')}"
           `;
 
           for (const dataKey in itemData) {
@@ -465,6 +474,7 @@ module.exports = (window => {
       const modalContent = query('#zuck-modal-content');
 
       const moveStoryItem = function (direction) {
+        debug(`moveStoryItem(${direction})`);
         const modalContainer = query('#zuck-modal');
 
         let target = '';
@@ -569,7 +579,10 @@ module.exports = (window => {
               playVideoItem(storyViewer, [items[0], items[1]], true);
             }
 
+            currentStoryData = zuck.data[zuck.internalData.currentStory];
+
             option('callbacks', 'onView')(zuck.internalData.currentStory);
+            option('callbacks', 'onItemView')(currentStoryData.items[currentStoryData.currentItem].id);
           }
         }, transitionTime + 50);
       };
@@ -943,13 +956,16 @@ module.exports = (window => {
 
               tryFullScreen();
             }
+            currentStoryData = zuck.data[zuck.internalData.currentStory];
 
             option('callbacks', 'onView')(storyId);
+            option('callbacks', 'onItemView')(currentStoryData.items[currentStoryData.currentItem].id);
           };
 
           option('callbacks', 'onOpen')(storyId, callback);
         },
         next (unmute) {
+          debug(`next(${unmute})`);
           const callback = function () {
             const lastStory = zuck.internalData.currentStory;
             const lastStoryTimelineElement = query(
@@ -974,6 +990,41 @@ module.exports = (window => {
                 moveStoryItem(false);
               } else {
                 moveStoryItem(true);
+              }
+            }
+          };
+
+          option('callbacks', 'onEnd')(
+            zuck.internalData.currentStory,
+            callback
+          );
+        },
+        prev (unmute) {
+          debug(`prev(${unmute})`);
+          const callback = function () {
+            // const lastStory = zuck.internalData.currentStory;
+            // const lastStoryTimelineElement = query(
+            //   `#${id} [data-id="${lastStory}"]`
+            // );
+
+            // if (lastStoryTimelineElement) {
+            //   lastStoryTimelineElement.classList.add('seen');
+
+            //   zuck.data[lastStory].seen = true;
+            //   zuck.internalData.seenItems[lastStory] = true;
+
+            //   saveLocalData('seenItems', zuck.internalData.seenItems);
+            //   updateStorySeenPosition();
+            // }
+
+            const stories = query('#zuck-modal .story-viewer.previous');
+            if (!stories) {
+              // modal.close();
+            } else {
+              if (option('rtl')) {
+                moveStoryItem(true);
+              } else {
+                moveStoryItem(false);
               }
             }
           };
@@ -1015,18 +1066,19 @@ module.exports = (window => {
       const items = [];
 
       if (!option('reactive') || forceUpdate) {
-        each(storyItems, (i, { firstElementChild }) => {
-          const a = firstElementChild;
+        each(storyItems, (i, li) => {
+          const a = li.firstElementChild;
           const img = a.firstElementChild;
 
           const item = {
-            id: a.getAttribute('data-id'),
+            id: li.getAttribute('data-id'),
             src: a.getAttribute('href'),
             length: a.getAttribute('data-length'),
             type: a.getAttribute('data-type'),
             time: a.getAttribute('data-time'),
             link: a.getAttribute('data-link'),
             linkText: a.getAttribute('data-linkText'),
+            storyId: a.getAttribute('data-parent-id'),
             preview: img.getAttribute('src')
           };
 
@@ -1056,12 +1108,6 @@ module.exports = (window => {
     const parseStory = function (story, returnCallback) {
       const storyId = story.getAttribute('data-id');
 
-      let seen = false;
-
-      if (zuck.internalData.seenItems[storyId]) {
-        seen = true;
-      }
-
       /*
       REACT
       if (seen) {
@@ -1081,7 +1127,7 @@ module.exports = (window => {
         zuck.data[storyId].name = story.querySelector('.name').innerText;
         zuck.data[storyId].link = story.querySelector('.item-link').getAttribute('href');
         zuck.data[storyId].lastUpdated = story.getAttribute('data-last-updated');
-        zuck.data[storyId].seen = seen;
+        zuck.data[storyId].seen = story.getAttribute('data-seen') === "true";
 
         if (!zuck.data[storyId].items) {
           zuck.data[storyId].items = [];
@@ -1249,7 +1295,7 @@ module.exports = (window => {
         preview = items[0].preview || '';
       }
 
-      if (zuck.internalData.seenItems[storyId] === true) {
+      if (option('localStorage') && zuck.internalData.seenItems[storyId] === true) {
         data.seen = true;
       }
 
@@ -1272,6 +1318,7 @@ module.exports = (window => {
 
       story.setAttribute('data-id', storyId);
       story.setAttribute('data-photo', get(data, 'photo'));
+      story.setAttribute('data-seen', get(data, 'seen'));
       story.setAttribute('data-last-updated', get(data, 'lastUpdated'));
 
       parseStory(story);
@@ -1305,6 +1352,7 @@ module.exports = (window => {
 
     zuck.addItem = (storyId, data, append) => {
       const story = query(`#${id} > [data-id="${storyId}"]`);
+      data['storyId'] = storyId;
 
       if (!option('reactive')) {
         const li = document.createElement('li');
@@ -1335,6 +1383,7 @@ module.exports = (window => {
     };
 
     zuck.navigateItem = zuck.nextItem = (direction, event) => {
+      debug(`zuck.nextItem(${direction}, ${event})`);
       const currentStory = zuck.internalData.currentStory;
       const currentItem = zuck.data[currentStory].currentItem;
       const storyViewer = query(`#zuck-modal .story-viewer[data-story-id="${currentStory}"]`);
@@ -1377,6 +1426,7 @@ module.exports = (window => {
           });
 
           zuck.data[currentStory].currentItem = zuck.data[currentStory].currentItem + directionNumber;
+          option('callbacks', 'onItemView')(zuck.data[currentStory].items[zuck.data[currentStory].currentItem].id);
 
           playVideoItem(storyViewer, nextItems, event);
         };
@@ -1388,6 +1438,8 @@ module.exports = (window => {
       } else if (storyViewer) {
         if (direction !== 'previous') {
           modal.next(event);
+        } else {
+          modal.prev(event);
         }
       }
     };
@@ -1415,7 +1467,7 @@ module.exports = (window => {
         );
       }
 
-      if (!option('reactive')) {
+      if (!option('reactive') && option('localStorage')) {
         const seenItems = getLocalData('seenItems');
 
         each(Object.keys(seenItems), (keyIndex, key) => {
@@ -1444,14 +1496,15 @@ module.exports = (window => {
   };
 
   /* Helpers */
-  ZuckJS.buildTimelineItem = (id, photo, name, link, lastUpdated, items) => {
+  ZuckJS.buildTimelineItem = (id, photo, name, link, lastUpdated, items, seen) => {
     const timelineItem = {
       id,
       photo,
       name,
       link,
       lastUpdated,
-      items: []
+      items: [],
+      seen: seen != undefined ? seen : false,
     };
 
     each(items, (itemIndex, itemArgs) => {

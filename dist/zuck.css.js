@@ -82,20 +82,15 @@ var Zuck =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/zuck.css");
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ "./src/zuck.css":
-/*!**********************!*\
-  !*** ./src/zuck.css ***!
-  \**********************/
-/*! no static exports found */
+/******/ ([
+/* 0 */,
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("// extracted by mini-css-extract-plugin\n\n//# sourceURL=webpack://Zuck/./src/zuck.css?");
+// extracted by mini-css-extract-plugin
 
 /***/ })
-
-/******/ });
+/******/ ]);
